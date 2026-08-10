@@ -1,0 +1,9 @@
+service: "service:WineClassifier"
+include:
+  - "service.py"
+python:
+  packages:
+    - scikit-learn
+    - numpy
+docker:
+  python_version: "3.12"
