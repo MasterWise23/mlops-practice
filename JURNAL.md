@@ -73,7 +73,7 @@ Proiect: `~/mlops-practice/primul-proiect`
 - Capitolul MLflow e complet: tracking (ziua 1) + registry (ziua 2)
 - Toată munca e salvată în `~/mlops-practice/primul-proiect` (`train.py`, `predict.py`, `mlruns/`, config)
 - Reluare: `cd ~/mlops-practice/primul-proiect`
-- Următor: **nivelul 3** — orchestrare (Prefect sau Airflow): legarea etapelor într-un pipeline automat
+- Următor: **nivelul 4** — Kubernetes (Minikube local) și, opțional, un cluster cloud real
 
 ---
 
@@ -82,8 +82,8 @@ Proiect: `~/mlops-practice/primul-proiect`
 - **Fundament:** Python + Git, Docker ✓
 - **Nivel 1:** MLflow (tracking ✓ + registry ✓), DVC (versionare date) ✓
 - **Nivel 2:** FastAPI ✓ + Docker ✓ + BentoML ✓, Evidently ✓ (monitorizare, drift)
-- **Nivel 3:** Prefect / Airflow (orchestrare) ← *aici sunt acum*
-- **Nivel 4 (opțional, în funcție de job):** Kubernetes, platformă cloud (SageMaker / Vertex AI / Azure ML)
+- **Nivel 3:** Prefect (orchestrare) ✓
+- **Nivel 4:** Kubernetes (Minikube local), platformă cloud (SageMaker / Vertex AI / Azure ML) ← *aici sunt acum*
 
 ---
 
@@ -207,3 +207,35 @@ Proiect: `~/mlops-practice/primul-proiect`
 
 ### Bilanț — nivelul 2 complet
 - Lanț MLOps funcțional cap-la-cap în 5 zile: date versionate (DVC) → experimente și modele versionate (MLflow) → model servit ca API (FastAPI) → containerizat manual (Docker) și automat (BentoML) → monitorizat pentru drift (Evidently)
+
+---
+
+## Ziua 6 — 10 august 2026
+
+### Publicarea proiectului pe GitHub
+- Verificat `git status` — multe fișiere „grele" riscau să ajungă pe GitHub (mlruns/, model.pkl, mlflow.db, .bentoml/) — trebuiau excluse
+- Reparat `.gitignore`: un lipit incomplet în nano lăsase fișierul trunchiat la jumătate (se oprea la `.venv`); completat cu liniile lipsă
+- Decizie: `JURNAL.md` rămâne urmărit (dovadă de proces pentru CV), `drift_report.html` intră în `.gitignore` (fișier generat, nu cod sursă)
+- Git nu era configurat pe acest laptop — normal, configurarea (`user.name`/`user.email`) e per-mașină, nu se transferă de pe alt laptop
+- Creat repo pe GitHub, legat cu `git remote add origin` + `git push -u origin main`
+- Autentificare: parola de cont nu mai e acceptată de GitHub din 2021 — generat un **Personal Access Token** (scope `repo`) și folosit ca parolă la push
+- Proiect live: github.com/MasterWise23/mlops-practice
+
+### Prefect — orchestrare (nivelul 3)
+- Ideea: până acum scripturile rulau manual, în ordine; orchestrarea le leagă într-un **pipeline** care rulează singur și e vizibil într-un dashboard
+- Ales Prefect (mai prietenos ca prim contact decât Airflow, standardul de industrie dar mai greoi) — conceptele se transferă
+- `@task` = un pas individual; `@flow` = pipeline-ul care le cheamă în ordine
+- Scris `pipeline.py`: task-uri `genereaza_date`, `antreneaza` (cu `retries=2, retry_delay_seconds=5`), `valideaza` (oprește pipeline-ul dacă accuracy sub un prag)
+- Rulat local (`uv run python pipeline.py`) — vizibil în dashboard-ul Prefect (`prefect server start`, port **4200**, diferit de MLflow/5000 și BentoML/3000)
+- Testat un eșec controlat (prag imposibil de atins) → pipeline-ul s-a oprit exact la task-ul `valideaza`, cu eroarea vizibilă atât în terminal cât și în dashboard (rulare marcată „Failed", cu motivul exact)
+- Diferența-cheie față de scripturi separate: eșecul nu se pierde tăcut într-un terminal închis — rămâne înregistrat, cu cauza la un click distanță
+
+### Prefect — deployment programat
+- `.serve()` cu `cron="0 6 * * *"` — cea mai simplă cale de a programa un flow, fără worker/infrastructură separată
+- Deployment vizibil în dashboard la secțiunea „Deployments", cu programul afișat și buton „Run" pentru declanșare manuală imediată
+- Testat cu „Run" manual — a pornit o rulare nouă, vizibilă în istoric
+- De reținut: programul (cron) e activ doar cât timp scriptul cu `.serve()` rulează activ — pentru rulare 24/7 reală ar trebui infrastructură suplimentară (worker persistent), dincolo de scopul exercițiului
+
+### Bilanț — nivelul 3 complet
+- Pipeline cu task-uri legate, retry automat, validare care oprește flow-ul dacă modelul nu e suficient de bun, programare automată — sistemul mic al unei echipe reale: „antrenează → verifică dacă e suficient de bun → doar dacă da, mergi mai departe"
+- Decizie: se continuă și cu **nivelul 4** (Kubernetes / cloud) — găsite joburi care îl cer explicit
