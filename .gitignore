@@ -15,3 +15,5 @@ model/
 *.db
 .bentoml/
 drift_report.html
+kubectl
+minikube-linux-amd64

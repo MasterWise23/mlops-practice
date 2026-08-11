@@ -73,7 +73,7 @@ Proiect: `~/mlops-practice/primul-proiect`
 - Capitolul MLflow e complet: tracking (ziua 1) + registry (ziua 2)
 - Toată munca e salvată în `~/mlops-practice/primul-proiect` (`train.py`, `predict.py`, `mlruns/`, config)
 - Reluare: `cd ~/mlops-practice/primul-proiect`
-- Următor: **nivelul 4** — Kubernetes (Minikube local) și, opțional, un cluster cloud real
+- Proiect finalizat pe cele 4 niveluri principale din roadmap. Opțional de continuat: cluster cloud real (GKE/EKS/AKS)
 
 ---
 
@@ -83,7 +83,7 @@ Proiect: `~/mlops-practice/primul-proiect`
 - **Nivel 1:** MLflow (tracking ✓ + registry ✓), DVC (versionare date) ✓
 - **Nivel 2:** FastAPI ✓ + Docker ✓ + BentoML ✓, Evidently ✓ (monitorizare, drift)
 - **Nivel 3:** Prefect (orchestrare) ✓
-- **Nivel 4:** Kubernetes (Minikube local), platformă cloud (SageMaker / Vertex AI / Azure ML) ← *aici sunt acum*
+- **Nivel 4:** Kubernetes (Minikube local) ✓, platformă cloud (opțional, neînceput)
 
 ---
 
@@ -239,3 +239,37 @@ Proiect: `~/mlops-practice/primul-proiect`
 ### Bilanț — nivelul 3 complet
 - Pipeline cu task-uri legate, retry automat, validare care oprește flow-ul dacă modelul nu e suficient de bun, programare automată — sistemul mic al unei echipe reale: „antrenează → verifică dacă e suficient de bun → doar dacă da, mergi mai departe"
 - Decizie: se continuă și cu **nivelul 4** (Kubernetes / cloud) — găsite joburi care îl cer explicit
+
+---
+
+## Ziua 7 — 11 august 2026
+
+### Kubernetes (nivelul 4) — pornirea locală
+- Decizie: se face și nivelul 4, fiindcă apar joburi care îl cer explicit — vreau un proiect care să-l demonstreze, nu doar teorie
+- Ideea de bază: Kubernetes rulează containere la scară, cu recuperare automată — Minikube = un „Kubernetes în miniatură" local, aceleași comenzi (`kubectl`) ca într-un cluster real de producție
+- Instalat `kubectl` și `minikube` prin `curl` + `sudo install`
+
+### Peripeții rezolvate pe drum
+- Prima problemă: integrarea WSL a Docker Desktop era dezactivată pentru distribuția mutată pe E: → `docker` „not found" în Ubuntu. Rezolvat din Docker Desktop → Settings → Resources → WSL Integration → activat comutatorul pentru Ubuntu → Apply & Restart
+- A doua problemă: bug de detecție Minikube — raporta greșit mediul ca „kvm/amd64" → eroare `DRV_UNSUPPORTED_OS`. Rezolvat cu `minikube start --driver=docker --force`
+- A treia problemă, mai serioasă: **spațiu 0 pe C:**, care a dus la Docker Desktop instabil (segfault la crearea unui volum). Cauza principală: date interne Docker (`docker-desktop-data`, imagini, cache de build) acumulate pe C: în ciuda faptului că Ubuntu era pe E:
+- Rezolvat: `docker system prune -a --volumes` a eliberat spațiu semnificativ; verificat și cu Disk Cleanup / Windows.old / hiberfil.sys ca surse posibile
+- După curățare + `minikube delete --all` + `minikube start --driver=docker --force`, clusterul a pornit curat: `minikube` node, status `Ready`, v1.35.1
+
+### Deployment în cluster — Pod, Deployment, Service
+- Conceptele de bază: **Pod** = unitatea rulabilă (containerul); **Deployment** = „rețeta" care menține N copii pornite și le reînvie dacă mor; **Service** = adresă stabilă către Pod-uri, indiferent că acestea mor și reapar
+- Imaginea trebuie încărcată explicit în Minikube (mediu Docker separat de cel local): `minikube image load wine-api`
+- Scris `k8s-deployment.yaml` cu două resurse: Deployment (1 replică inițial, `imagePullPolicy: Never` ca să nu caute imaginea online) + Service de tip NodePort
+- Aplicat cu `kubectl apply -f k8s-deployment.yaml`
+- Acces la API prin `minikube service wine-api-service --url` (pe driverul Docker/Linux, tunelul cere terminalul deschis cât timp îl folosești)
+- Testat `/predict` prin cluster — a funcționat
+
+### Scalare și self-healing (momentul central al lui K8s)
+- `kubectl scale deployment wine-api-deployment --replicas=3` → 3 pod-uri Running simultan, servind traficul
+- Test de recuperare: `kubectl delete pod <nume>` pe un pod din cele 3 → Kubernetes a detectat discrepanța (cerea 3, avea 2) și a pornit automat un pod nou, fără nicio intervenție
+- Diferența față de Docker simplu: acolo, un container mort rămâne mort până intervii; în Kubernetes, sistemul se auto-repară continuu
+
+### Bilanț — nivelul 4 (local) complet
+- Concepte demonstrate cu experiență directă, nu doar teorie: Pod, Deployment, Service, scalare, self-healing
+- Decizie: se încheie aici pentru moment (varianta cloud — GKE/EKS/AKS real — rămâne opțiune de continuare ulterioară)
+- Proiectul acoperă acum toate cele 4 niveluri din roadmap-ul MLOps, publicat pe GitHub: github.com/MasterWise23/mlops-practice
