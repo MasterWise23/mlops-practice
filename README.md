@@ -78,3 +78,15 @@ minikube service wine-api-service --url
 ## Why this project
 
 Built as a hands-on MLOps exercise, following a tiered roadmap (foundations → versioning/tracking → serving → orchestration → deployment at scale), with an emphasis on understanding each tool through direct use before moving to the next. Process details, including real problems encountered (Python version conflicts, WSL/Docker configuration, environment bugs) and how they were resolved, are in [`JURNAL.md`](./JURNAL.md).
+
+## Author
+
+**Ștefania-Alexandra Tanasă**
+Robotics Engineering (English profile) — UTCN Cluj-Napoca
+[GitHub](https://github.com/MasterWise23)
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
