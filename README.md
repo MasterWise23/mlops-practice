@@ -6,6 +6,30 @@ Model used: classification on the `load_wine` dataset (scikit-learn) — chosen 
 
 The full process, including decisions made and problems hit along the way, is documented day by day in [`JURNAL.md`](./JURNAL.md).
 
+## Quick Start & Reproducibility
+To run the entire pipeline and services, use the provided Makefile:
+1. **Build and start all services via Docker:**
+   ```bash
+   make up
+2. **Run the pipeline tests:**
+   ```bash
+   make test
+3. **Tear down the environment:**
+   ```bash
+   make clean
+
+### Available Makefile Commands
+
+If you want more granular control over the environment, the following commands are available:
+
+| Command | Description |
+|---|---|
+| `make setup` | Sets up the local Python virtual environment and installs dependencies from `requirements.txt`. |
+| `make build` | Builds the Docker image for the MLOps pipeline container. |
+| `make up`    | Spins up all defined services in detached mode using Docker Compose. |
+| `make test`  | Executes automated pipeline and model validation tests via `pytest`. |
+| `make clean` | Stops and removes running Docker containers, freeing up system resources. |
+
 ## What this project covers
 
 **Versioning (data + models)**
